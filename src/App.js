@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './index.css';
 
 function App() {
@@ -13,6 +13,22 @@ function App() {
   const num1 = screenValue.split(operator)[0];
   const num2 = screenValue.split(operator)[1];
   console.log(operator, num1, num2);
+
+  useEffect(
+    function () {
+      function callback(e) {
+        if (e.key === 'Enter') {
+          handleEqualsClick();
+        }
+        if (e.key === 'Backspace') {
+          setScreenValue((value) => value.slice(0, value.length - 1));
+        }
+      }
+      document.addEventListener('keydown', callback);
+      return () => document.removeEventListener('keydown', callback);
+    },
+    [handleEqualsClick]
+  );
 
   function handleOperationClick(operation) {
     if (!screenValue || ['%', '/', '+', '-'].includes(screenValue.slice(-1)))
@@ -60,9 +76,24 @@ function App() {
     setScreenValue((value) => value + '.');
   }
 
+  function handleScreenInput(e) {
+    const key = e.target.value.slice(-1);
+    const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+    if (![...digits, ...operators, '.'].includes(key)) return;
+    if (operators.includes(key)) {
+      handleOperationClick(key);
+      return;
+    }
+    if (key === '.') {
+      handleDecimalClick();
+      return;
+    }
+    setScreenValue(e.target.value);
+  }
+
   return (
     <>
-      <Screen screenValue={screenValue} />
+      <Screen onScreenInput={handleScreenInput} screenValue={screenValue} />
       <KeyBoard>
         <AllClearButton setScreenValue={setScreenValue} />
         <ClearButton setScreenValue={setScreenValue} />
@@ -103,10 +134,15 @@ function App() {
   );
 }
 
-function Screen({ screenValue }) {
+function Screen({ screenValue, onScreenInput }) {
   return (
     <div className="screen">
-      <input type="text" id="screen-input" value={screenValue} />
+      <input
+        type="text"
+        id="screen-input"
+        value={screenValue}
+        onChange={onScreenInput}
+      />
     </div>
   );
 }
